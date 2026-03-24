@@ -1,1 +1,1 @@
-# PrismaFlux Auto
+# PrismaFlux app
