@@ -7,6 +7,7 @@
 export interface AS24ModelRef {
   id: number;
   name: string;
+  aliases?: string[];
 }
 
 export interface AS24MakeRef {
@@ -107,16 +108,16 @@ export const AS24_MAKES: AS24MakeRef[] = [
     id: 13,
     name: "BMW",
     models: [
-      { id: 1301, name: "Série 1" },
-      { id: 1302, name: "Série 2" },
-      { id: 1303, name: "Série 3" },
-      { id: 1304, name: "Série 4" },
-      { id: 1305, name: "Série 5" },
-      { id: 1306, name: "X1" },
-      { id: 1307, name: "X3" },
-      { id: 1308, name: "X5" },
-      { id: 1309, name: "X6" },
-      { id: 1310, name: "iX" },
+      { id: 1301, name: "Série 1", aliases: ["Serie 1", "1 Series", "1er", "116", "118", "120", "125", "130", "135"] },
+      { id: 1302, name: "Série 2", aliases: ["Serie 2", "2 Series", "2er", "218", "220", "225", "228", "230", "235"] },
+      { id: 1303, name: "Série 3", aliases: ["Serie 3", "3 Series", "3er", "316", "318", "320", "325", "328", "330", "335", "340"] },
+      { id: 1304, name: "Série 4", aliases: ["Serie 4", "4 Series", "4er", "418", "420", "425", "428", "430", "435", "440"] },
+      { id: 1305, name: "Série 5", aliases: ["Serie 5", "5 Series", "5er", "518", "520", "525", "528", "530", "535", "540", "545", "550"] },
+      { id: 1306, name: "X1", aliases: ["X 1"] },
+      { id: 1307, name: "X3", aliases: ["X 3"] },
+      { id: 1308, name: "X5", aliases: ["X 5"] },
+      { id: 1309, name: "X6", aliases: ["X 6"] },
+      { id: 1310, name: "iX", aliases: ["i X", "ix"] },
     ],
   },
   {
