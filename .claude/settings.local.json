@@ -78,7 +78,9 @@
       "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"gh auth status 2>&1\")",
       "Bash(git config:*)",
       "Bash(head -5 \"C:/Users/eric-/prismaflux-app-/src/app/\\(marketing\\)/page.tsx\")",
-      "Bash(ls \"C:/Users/eric-/prismaflux-app-/src/app/manifest\"*)"
+      "Bash(ls \"C:/Users/eric-/prismaflux-app-/src/app/manifest\"*)",
+      "Bash(gh auth:*)",
+      "Bash(\"/c/Program Files/nodejs/npx.cmd\" tsx scripts/generate-audit-pdf.ts)"
     ]
   }
 }
