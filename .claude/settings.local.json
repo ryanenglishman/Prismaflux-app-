@@ -76,7 +76,8 @@
       "Bash(export DATABASE_URL=\"file:./dev.db\")",
       "Bash(git remote:*)",
       "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"gh auth status 2>&1\")",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(head -5 \"C:/Users/eric-/prismaflux-app-/src/app/\\(marketing\\)/page.tsx\")"
     ]
   }
 }
