@@ -1,0 +1,716 @@
+// PrismaFlux Auto — Schema Prisma v1
+// 28 tables, 5 copilotes MVP (Robin, Pierre, Marcus, Lana Basic, Lana Performance)
+// Multi-tenant, multi-concessions
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// CORE — Network, Organization, User
+// ============================================================
+
+model Network {
+  id            String         @id @default(uuid())
+  name          String
+  createdAt     DateTime       @default(now())
+  organizations Organization[]
+}
+
+model Organization {
+  id                  String                @id @default(uuid())
+  name                String
+  siret               String?
+  address             String?
+  city                String?
+  postalCode          String?
+  country             String                @default("BE")
+  phone               String?
+  email               String?
+  publicSlug          String?               @unique
+  catalogIsPublic     Boolean               @default(true)
+  catalogDescription  String?
+  googlePlaceId       String?
+  networkId           String?
+  network             Network?              @relation(fields: [networkId], references: [id])
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  users               User[]
+  vehicles            Vehicle[]
+  listings            Listing[]
+  userRoles           UserRole[]
+  permissionSets      PermissionSet[]
+  orgPlatforms        OrganizationPlatform[]
+  studioConfig        StudioConfig?
+  copiloteSessions    CopiloteSession[]
+  reports             Report[]
+  reputationSnapshots ReputationSnapshot[]
+  subscriptions       Subscription[]
+  adClipOrders        AdClipOrder[]
+  websiteAudits       WebsiteAudit[]
+  websiteConnections  WebsiteConnection[]
+  socialPosts         SocialPost[]
+  socialAccounts      SocialAccount[]
+  lanaSessions        LanaSession[]
+  websiteBriefRequests WebsiteBriefRequest[]
+  platformHealthChecks PlatformHealthCheck[]
+
+  @@index([networkId])
+  @@index([publicSlug])
+}
+
+model User {
+  id               String          @id @default(uuid())
+  email            String          @unique
+  name             String?
+  supabaseUserId   String          @unique
+  organizationId   String
+  organization     Organization    @relation(fields: [organizationId], references: [id])
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  userRole         UserRole?
+  permissionSet    PermissionSet?
+  grantedRoles     UserRole[]      @relation("GrantedBy")
+  grantedPerms     PermissionSet[] @relation("GrantedBy")
+  copiloteSessions CopiloteSession[]
+  adClipOrders     AdClipOrder[]
+  lanaSessions     LanaSession[]
+
+  @@index([organizationId])
+  @@index([supabaseUserId])
+}
+
+// ============================================================
+// RBAC — UserRole, PermissionSet
+// ============================================================
+
+enum UserTier {
+  PRIMARY_ADMIN
+  CO_ADMIN
+  EMPLOYEE
+}
+
+model UserRole {
+  id              String       @id @default(uuid())
+  userId          String       @unique
+  user            User         @relation(fields: [userId], references: [id])
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  tier            UserTier
+  isPrimaryAdmin  Boolean      @default(false)
+  grantedById     String?
+  grantedBy       User?        @relation("GrantedBy", fields: [grantedById], references: [id])
+  createdAt       DateTime     @default(now())
+
+  @@index([organizationId])
+}
+
+model PermissionSet {
+  id                       String       @id @default(uuid())
+  userId                   String       @unique
+  user                     User         @relation(fields: [userId], references: [id])
+  organizationId           String
+  organization             Organization @relation(fields: [organizationId], references: [id])
+  grantedById              String?
+  grantedBy                User?        @relation("GrantedBy", fields: [grantedById], references: [id])
+  canManageVehicles        Boolean      @default(true)
+  canPublishListings       Boolean      @default(true)
+  canViewReports           Boolean      @default(true)
+  canManageTeam            Boolean      @default(false)
+  canAccessStudio          Boolean      @default(true)
+  canConnectPlatforms      Boolean      @default(false)
+  canViewFinance           Boolean      @default(false)
+  canViewPlatformHealth    Boolean      @default(true)
+  canRunHealthCheck        Boolean      @default(false)
+  canOrderAdClips          Boolean      @default(false)
+  canManageTeamPermissions Boolean      @default(false)
+  customRestrictions       Json?
+  createdAt                DateTime     @default(now())
+  updatedAt                DateTime     @updatedAt
+
+  @@index([organizationId])
+}
+
+// ============================================================
+// PLATFORMS — Platform, OrganizationPlatform, PlatformHealthCheck
+// ============================================================
+
+enum PlatformSlug {
+  PRISMAFLUX_CATALOG
+  AUTOSCOUT24
+  GOCAR
+  TWEEDEMAIN
+  LA_CENTRALE
+  MOBILE_DE
+  DEALERSHIP_WEBSITE
+  CARCHECK
+}
+
+model Platform {
+  id                String       @id @default(uuid())
+  slug              PlatformSlug @unique
+  name              String
+  isAvailable       Boolean      @default(false)
+  requiresDevis     Boolean      @default(false)
+  monthlyPrice      Decimal      @default(0)
+  discountedPrice   Decimal?
+  discountCondition String?
+  launchPhase       String       @default("1")
+  apiBaseUrl        String?
+  authType          String?      // BASIC, OAUTH, FEED_CSV, FEED_XML, NONE
+  createdAt         DateTime     @default(now())
+
+  orgPlatforms      OrganizationPlatform[]
+  listings          Listing[]
+  healthChecks      PlatformHealthCheck[]
+}
+
+model OrganizationPlatform {
+  id                       String       @id @default(uuid())
+  organizationId           String
+  organization             Organization @relation(fields: [organizationId], references: [id])
+  platformId               String
+  platform                 Platform     @relation(fields: [platformId], references: [id])
+  isConnected              Boolean      @default(false)
+  connectedAt              DateTime?
+  apiUsername               String?
+  apiPassword              String?
+  apiKey                   String?
+  externalCustomerId       String?
+  stripeSubscriptionItemId String?
+  appliedPrice             Decimal?
+  discountApplied          Boolean      @default(false)
+  discountReason           String?
+  createdAt                DateTime     @default(now())
+  updatedAt                DateTime     @updatedAt
+
+  @@unique([organizationId, platformId])
+  @@index([organizationId])
+}
+
+enum HealthCheckStatus {
+  OK
+  WARNING
+  BLOCKED
+}
+
+model PlatformHealthCheck {
+  id             String            @id @default(uuid())
+  organizationId String
+  organization   Organization      @relation(fields: [organizationId], references: [id])
+  platformId     String
+  platform       Platform          @relation(fields: [platformId], references: [id])
+  checkType      String
+  status         HealthCheckStatus
+  detectedIssue  String?
+  suggestedFix   String?
+  checkedAt      DateTime          @default(now())
+
+  @@index([organizationId, platformId])
+}
+
+// ============================================================
+// VEHICLES — Vehicle, VehiclePhoto
+// ============================================================
+
+enum VehicleStatus {
+  DRAFT
+  ACTIVE
+  SOLD
+  ARCHIVED
+}
+
+model Vehicle {
+  id                     String        @id @default(uuid())
+  organizationId         String
+  organization           Organization  @relation(fields: [organizationId], references: [id])
+  make                   String
+  model                  String
+  modelVersion           String?
+  year                   Int?
+  mileage                Int?
+  price                  Decimal?
+  currency               String        @default("EUR")
+  fuelType               String?
+  transmission           String?
+  drivetrain             String?
+  bodyType               String?
+  bodyColor              String?
+  bodyColorName          String?
+  doorCount              Int?
+  seatCount              Int?
+  power                  Int?
+  cylinderCapacity       Int?
+  co2Emissions           Int?
+  vin                    String?
+  licensePlate           String?
+  firstRegistration      String?
+  previousOwners         Int?
+  condition              Json?
+  seoDescriptionFr       String?
+  seoDescriptionNl       String?
+  description            String?
+  equipment              Json?
+  highlights             String[]      @default([])
+  as24MakeId             Int?
+  as24ModelId            Int?
+  as24BodyColorId        Int?
+  as24BodyTypeId         Int?
+  as24FuelCategoryCode   String?
+  as24TransmissionCode   String?
+  as24EquipmentIds       Int[]         @default([])
+  status                 VehicleStatus @default(DRAFT)
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+
+  photos                 VehiclePhoto[]
+  listings               Listing[]
+  copiloteSessions       CopiloteSession[]
+  socialPosts            SocialPost[]
+  lanaSessions           LanaSession[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([organizationId, status])
+}
+
+enum PhotoProcessingStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+model VehiclePhoto {
+  id               String                @id @default(uuid())
+  vehicleId        String
+  vehicle          Vehicle               @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  originalUrl      String
+  processedUrl     String?
+  processingStatus PhotoProcessingStatus @default(PENDING)
+  detectedColor    String?
+  detectedPart     String?
+  isMain           Boolean               @default(false)
+  sortOrder        Int                   @default(0)
+  studioConfig     Json?
+  as24ImageId      String?
+  uploadedAt       DateTime              @default(now())
+  processedAt      DateTime?
+
+  @@index([vehicleId])
+}
+
+// ============================================================
+// STUDIO — StudioConfig (per organization)
+// ============================================================
+
+model StudioConfig {
+  id                    String       @id @default(uuid())
+  organizationId        String       @unique
+  organization          Organization @relation(fields: [organizationId], references: [id])
+  logoUrl               String?
+  logoPosition          String       @default("BOTTOM_RIGHT")
+  autoRemoveBackground  Boolean      @default(false)
+  autoRemoveReflections Boolean      @default(false)
+  autoDropShadow        Boolean      @default(false)
+  virtualStagingEnabled Boolean      @default(false)
+  outputFormat          String       @default("JPEG")
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+}
+
+// ============================================================
+// DIFFUSION — Listing (Robin)
+// ============================================================
+
+enum ListingStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  EXPIRED
+  INACTIVE
+  FAILED
+}
+
+model Listing {
+  id             String        @id @default(uuid())
+  vehicleId      String
+  vehicle        Vehicle       @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  platformId     String
+  platform       Platform      @relation(fields: [platformId], references: [id])
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  externalId     String?
+  externalUrl    String?
+  culture        String?
+  status         ListingStatus @default(PENDING)
+  publishedAt    DateTime?
+  lastSyncAt     DateTime?
+  errorMessage   String?
+  as24TestMode   Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([vehicleId, platformId, culture])
+  @@index([organizationId])
+  @@index([vehicleId])
+  @@index([status])
+}
+
+// ============================================================
+// AI SESSIONS — CopiloteSession
+// ============================================================
+
+enum CopiloteName {
+  ROBIN
+  PIERRE
+  MARCUS
+  LANA_BASIC
+  LANA_PERFORMANCE
+}
+
+model CopiloteSession {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  copilote       CopiloteName
+  vehicleId      String?
+  vehicle        Vehicle?     @relation(fields: [vehicleId], references: [id])
+  inputPrompt    String?
+  outputResult   String?
+  tokensUsed     Int          @default(0)
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([userId])
+}
+
+// ============================================================
+// PIERRE — Report, ReputationSnapshot
+// ============================================================
+
+enum ReportType {
+  PLATFORMS_DETECTED
+  LISTING_AUDIT
+  REPUTATION_ANALYSIS
+}
+
+model Report {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  type           ReportType
+  title          String
+  content        Json
+  generatedAt    DateTime     @default(now())
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([organizationId, type])
+}
+
+model ReputationSnapshot {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  platformName   String
+  overallScore   Decimal?
+  reviewCount    Int?
+  sentimentScore Decimal?
+  sourceUrl      String?
+  capturedAt     DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([organizationId, platformName])
+}
+
+// ============================================================
+// BILLING — Subscription
+// ============================================================
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  CANCELLED
+  PAST_DUE
+}
+
+enum BillingInterval {
+  MONTHLY
+  ANNUAL
+}
+
+model Subscription {
+  id                       String             @id @default(uuid())
+  organizationId           String
+  organization             Organization       @relation(fields: [organizationId], references: [id])
+  billingInterval          BillingInterval    @default(MONTHLY)
+  status                   SubscriptionStatus @default(TRIALING)
+  stripeSubscriptionId     String?            @unique
+  stripeCustomerId         String?
+  trialEndsAt              DateTime?
+  currentPeriodStart       DateTime?
+  currentPeriodEnd         DateTime?
+  lanaPerformanceEnabled   Boolean            @default(false)
+  lanaStripeItemId         String?
+  marcusPerformanceEnabled Boolean            @default(false)
+  marcusStripeItemId       String?
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+
+  @@index([organizationId])
+  @@index([stripeSubscriptionId])
+}
+
+// ============================================================
+// CLIPS PUB — AdClipOrder, AdClipAsset, AdClipRevision
+// ============================================================
+
+enum ClipDuration {
+  THIRTY_SEC
+  FORTY_FIVE_SEC
+  SIXTY_SEC
+}
+
+enum ClipOrderStatus {
+  DRAFT
+  SUBMITTED
+  IN_PRODUCTION
+  REVIEW
+  DELIVERED
+  ARCHIVED
+}
+
+model AdClipOrder {
+  id                    String          @id @default(uuid())
+  organizationId        String
+  organization          Organization    @relation(fields: [organizationId], references: [id])
+  userId                String
+  user                  User            @relation(fields: [userId], references: [id])
+  duration              ClipDuration
+  price                 Decimal
+  status                ClipOrderStatus @default(DRAFT)
+  title                 String?
+  brief                 String?
+  targetAudience        String?
+  toneStyle             String?
+  stripePaymentIntentId String?
+  paidAt                DateTime?
+  deliveredAt           DateTime?
+  deliveryUrl           String?
+  feedback              String?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  assets                AdClipAsset[]
+  revisions             AdClipRevision[]
+
+  @@index([organizationId])
+}
+
+model AdClipAsset {
+  id        String      @id @default(uuid())
+  orderId   String
+  order     AdClipOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  assetType String
+  url       String
+  filename  String
+  uploadedAt DateTime   @default(now())
+
+  @@index([orderId])
+}
+
+model AdClipRevision {
+  id         String      @id @default(uuid())
+  orderId    String
+  order      AdClipOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  version    Int
+  videoUrl   String
+  notes      String?
+  isApproved Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+
+  @@index([orderId])
+}
+
+// ============================================================
+// MARCUS — WebsiteAudit, WebsiteConnection, WebsiteBriefRequest
+// ============================================================
+
+enum RecommendationLevel {
+  CONNECT
+  IMPROVE
+  REBUILD
+  CREATE
+}
+
+enum QualityTier {
+  NONE
+  LOW
+  MEDIUM
+  HIGH
+  EXCELLENT
+}
+
+model WebsiteAudit {
+  id                      String              @id @default(uuid())
+  organizationId          String
+  organization            Organization        @relation(fields: [organizationId], references: [id])
+  websiteUrl              String?
+  siteDetected            Boolean             @default(false)
+  siteQualityScore        Int?
+  qualityTier             QualityTier         @default(NONE)
+  hasSSL                  Boolean?
+  hasMobileVersion        Boolean?
+  hasContactForm          Boolean?
+  hasCatalogSync          Boolean?
+  pageSpeedScore          Int?
+  seoScore                Int?
+  localSeoScore           Int?
+  detectedCity            String?
+  targetKeywords          Json?
+  missingKeywords         Json?
+  existingKeywords        Json?
+  googleBusinessDetected  Boolean?
+  googleBusinessScore     Int?
+  localLandingPagesCount  Int?
+  recommendedLandingPages Json?
+  findings                Json?
+  recommendationLevel     RecommendationLevel @default(CREATE)
+  ctaShown                String?
+  isRead                  Boolean             @default(false)
+  reportGeneratedAt       DateTime            @default(now())
+  createdAt               DateTime            @default(now())
+
+  @@index([organizationId])
+}
+
+model WebsiteConnection {
+  id                String                  @id @default(uuid())
+  organizationId    String
+  organization      Organization            @relation(fields: [organizationId], references: [id])
+  siteUrl           String
+  connectionStatus  String                  @default("PENDING")
+  connectionType    String
+  catalogSyncActive Boolean                 @default(false)
+  googleAnalyticsId String?
+  searchConsoleId   String?
+  lastSyncAt        DateTime?
+  connectedAt       DateTime?
+
+  @@index([organizationId])
+}
+
+model WebsiteBriefRequest {
+  id                     String       @id @default(uuid())
+  organizationId         String
+  organization           Organization @relation(fields: [organizationId], references: [id])
+  contactName            String
+  contactEmail           String
+  contactPhone           String?
+  challenges             Json?
+  mainBrands             String[]     @default([])
+  monthlySalesVolume     String?
+  servicesOffered        Json?
+  monthlyMarketingBudget String?
+  currentSoftware        String?
+  logoUrl                String?
+  competitorSites        String[]     @default([])
+  currentFrustrations    String?
+  status                 String       @default("NEW")
+  notes                  String?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@index([status])
+}
+
+// ============================================================
+// LANA PERFORMANCE — SocialPost, SocialAccount, LanaSession
+// ============================================================
+
+enum SocialPlatform {
+  FACEBOOK
+  INSTAGRAM
+  X
+  LINKEDIN
+  TIKTOK
+}
+
+enum SocialPostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  FAILED
+}
+
+model SocialPost {
+  id             String           @id @default(uuid())
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id])
+  vehicleId      String
+  vehicle        Vehicle          @relation(fields: [vehicleId], references: [id])
+  platform       SocialPlatform
+  contentText    String?
+  hashtags       String[]         @default([])
+  mediaUrls      String[]         @default([])
+  status         SocialPostStatus @default(DRAFT)
+  scheduledAt    DateTime?
+  publishedAt    DateTime?
+  externalPostId String?
+  engagementData Json?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([organizationId])
+  @@index([vehicleId])
+}
+
+model SocialAccount {
+  id             String         @id @default(uuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  platform       SocialPlatform
+  accountName    String
+  accessToken    String?
+  tokenExpiresAt DateTime?
+  isActive       Boolean        @default(true)
+  connectedAt    DateTime       @default(now())
+
+  @@unique([organizationId, platform])
+  @@index([organizationId])
+}
+
+enum LanaMode {
+  BASIC
+  PERFORMANCE
+}
+
+model LanaSession {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  vehicleId      String
+  vehicle        Vehicle      @relation(fields: [vehicleId], references: [id])
+  lanaMode       LanaMode
+  inputData      Json?
+  outputData     Json?
+  tokensUsed     Int          @default(0)
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([vehicleId])
+}
