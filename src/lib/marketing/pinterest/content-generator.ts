@@ -51,9 +51,17 @@ Genere le titre, la description et le alt text Pinterest en francais.`,
     );
   }
 
-  const parsed = JSON.parse(content) as PinterestContent;
+  let parsed: PinterestContent;
+  try {
+    parsed = JSON.parse(content) as PinterestContent;
+  } catch {
+    throw new Error(
+      `Reponse JSON invalide du modele pour le contenu Pinterest: ${content.slice(0, 200)}`,
+    );
+  }
+
   if (!parsed.title || !parsed.description) {
-    throw new Error("Champs title ou description manquants");
+    throw new Error("Champs title ou description manquants dans la reponse");
   }
 
   return {

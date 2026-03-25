@@ -1,6 +1,10 @@
 # PrismaFlux — Agent Pinterest
 
-Agent automatise qui publie chaque jour a 18h CET une image IA + contenu optimise sur Pinterest.
+Agent automatise qui publie chaque jour a 18h une image IA + contenu optimise sur Pinterest.
+
+> **Note horaire** : Le cron Vercel est en UTC (`0 16 * * *` = 16h UTC).
+> En ete (CEST, UTC+2) = **18h**. En hiver (CET, UTC+1) = **17h**.
+> Pour garder 18h toute l'annee, changer en `0 17 * * *` fin octobre et `0 16 * * *` fin mars.
 
 ## Pipeline
 

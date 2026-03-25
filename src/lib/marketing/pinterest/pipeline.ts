@@ -31,17 +31,14 @@ export async function runPinterestPipeline(): Promise<PipelineResult> {
   }
 
   try {
-    // Step 1: Generate a creative DALL-E prompt
+    // Step 1: Generate a creative image prompt
     const prompt = await generateImagePrompt();
 
-    // Step 2: Generate the image
-    const image = await generateImage(prompt.imagePrompt);
-
-    // Step 3: Generate Pinterest-optimized French content
-    const content = await generatePinterestContent(
-      prompt.imagePrompt,
-      prompt.theme,
-    );
+    // Step 2+3: Generate image AND Pinterest content in parallel (saves 5-10s)
+    const [image, content] = await Promise.all([
+      generateImage(prompt.imagePrompt),
+      generatePinterestContent(prompt.imagePrompt, prompt.theme),
+    ]);
 
     // Step 4: Post to Pinterest
     const payload = buildPinPayload(

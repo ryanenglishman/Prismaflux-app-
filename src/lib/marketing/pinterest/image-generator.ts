@@ -11,7 +11,7 @@ export async function generateImage(
     prompt,
     size: "1024x1536",
     quality: "high",
-    output_format: "png",
+    output_format: "jpeg",
     n: 1,
   });
 
@@ -22,7 +22,7 @@ export async function generateImage(
 
   return {
     base64Data: imageData,
-    contentType: "image/png",
+    contentType: "image/jpeg",
     size: "1024x1536",
   };
 }
