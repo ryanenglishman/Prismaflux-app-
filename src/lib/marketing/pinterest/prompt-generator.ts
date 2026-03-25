@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import type { PromptGenerationResult } from "./types";
 
 const THEMES = [
+  // Themes generaux automobile + IA
   "Concession automobile futuriste avec technologie IA",
   "Tableau de bord digital de performance et rotation des stocks",
   "Intelligence artificielle au service des concessionnaires",
@@ -10,6 +11,13 @@ const THEMES = [
   "Croissance et scaling d'une concession grace a l'IA",
   "Optimisation du temps pour les professionnels de l'automobile",
   "PrismaFlux - lumiere, prismes et innovation automobile",
+  // Themes lies aux copilotes PrismaFlux
+  "Multidiffusion automatique d'annonces sur toutes les plateformes auto",
+  "Retouche photo IA et studio visuel pour vehicules d'occasion",
+  "Analyse de performance web et SEO local pour concessions automobiles",
+  "Audit gratuit de site web pour professionnels de l'automobile",
+  "Reporting dirigeant et reputation en ligne pour concessionnaires",
+  "Gestion intelligente du stock et acceleration de la rotation vehicules",
 ] as const;
 
 const SYSTEM_PROMPT = `Tu es un directeur artistique specialise dans l'univers automobile premium et la technologie IA.

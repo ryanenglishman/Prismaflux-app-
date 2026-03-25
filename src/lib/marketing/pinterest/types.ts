@@ -21,10 +21,15 @@ export interface PinterestPinResult {
   createdAt: string;
 }
 
+export interface LinkedInResult {
+  post: string;
+}
+
 export interface PipelineResult {
   success: boolean;
   prompt?: PromptGenerationResult;
   content?: PinterestContent;
+  linkedin?: LinkedInResult;
   pin?: PinterestPinResult;
   error?: string;
   durationMs: number;

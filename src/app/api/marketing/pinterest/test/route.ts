@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { generateImagePrompt } from "@/lib/marketing/pinterest/prompt-generator";
 import { generateImage } from "@/lib/marketing/pinterest/image-generator";
 import { generatePinterestContent } from "@/lib/marketing/pinterest/content-generator";
+import { generateLinkedInContent } from "@/lib/marketing/pinterest/linkedin-generator";
+
+export const maxDuration = 60;
 
 export async function POST() {
   if (!process.env.OPENAI_API_KEY) {
@@ -16,19 +19,21 @@ export async function POST() {
   try {
     const prompt = await generateImagePrompt();
 
-    const [image, content] = await Promise.all([
+    const [image, content, linkedin] = await Promise.all([
       generateImage(prompt.imagePrompt),
       generatePinterestContent(prompt.imagePrompt, prompt.theme),
+      generateLinkedInContent(prompt.imagePrompt, prompt.theme),
     ]);
 
     return NextResponse.json({
       success: true,
       prompt,
       content,
+      linkedin,
       imagePreview: `data:${image.contentType};base64,${image.base64Data.slice(0, 100)}...`,
       imageSizeBytes: Math.round((image.base64Data.length * 3) / 4),
       durationMs: Date.now() - start,
-      note: "Mode test : l'image n'a PAS ete publiee sur Pinterest.",
+      note: "Mode test : l'image n'a PAS ete publiee sur Pinterest. Le post LinkedIn est pret a copier.",
     });
   } catch (err) {
     return NextResponse.json(

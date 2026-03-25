@@ -1,7 +1,9 @@
 import { generateImagePrompt } from "./prompt-generator";
 import { generateImage } from "./image-generator";
 import { generatePinterestContent } from "./content-generator";
+import { generateLinkedInContent } from "./linkedin-generator";
 import { createPin, buildPinPayload } from "./pinterest-client";
+import { sendNotification } from "./notifier";
 import type { PipelineResult } from "./types";
 
 export async function runPinterestPipeline(): Promise<PipelineResult> {
@@ -34,13 +36,14 @@ export async function runPinterestPipeline(): Promise<PipelineResult> {
     // Step 1: Generate a creative image prompt
     const prompt = await generateImagePrompt();
 
-    // Step 2+3: Generate image AND Pinterest content in parallel (saves 5-10s)
-    const [image, content] = await Promise.all([
+    // Step 2+3+4: Generate image, Pinterest content AND LinkedIn in parallel
+    const [image, content, linkedin] = await Promise.all([
       generateImage(prompt.imagePrompt),
       generatePinterestContent(prompt.imagePrompt, prompt.theme),
+      generateLinkedInContent(prompt.imagePrompt, prompt.theme),
     ]);
 
-    // Step 4: Post to Pinterest
+    // Step 5: Post to Pinterest
     const payload = buildPinPayload(
       image.base64Data,
       image.contentType,
@@ -48,22 +51,29 @@ export async function runPinterestPipeline(): Promise<PipelineResult> {
       content.description,
       content.altText,
       boardId,
-      "https://prismaflux.com",
+      "https://auto-prismaflux.com",
     );
     const pin = await createPin(payload);
 
-    return {
+    const result: PipelineResult = {
       success: true,
       prompt,
       content,
+      linkedin,
       pin,
       durationMs: Date.now() - start,
     };
+
+    await sendNotification(result);
+    return result;
   } catch (err) {
-    return {
+    const result: PipelineResult = {
       success: false,
       error: err instanceof Error ? err.message : String(err),
       durationMs: Date.now() - start,
     };
+
+    await sendNotification(result);
+    return result;
   }
 }
