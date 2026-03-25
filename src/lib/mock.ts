@@ -13,6 +13,7 @@ export interface MockVehicle {
   publishedOn: string[];
   photoUrl?: string;
   aiCompletionPct: number;
+  platformReadiness?: Record<string, { filled: number; total: number }>;
 }
 
 export const MOCK_VEHICLES: MockVehicle[] = [
@@ -28,6 +29,11 @@ export const MOCK_VEHICLES: MockVehicle[] = [
     status: "published",
     publishedOn: ["AutoScout24", "GoCar", "2ememain"],
     aiCompletionPct: 97,
+    platformReadiness: {
+      autoscout24: { filled: 47, total: 47 },
+      gocar: { filled: 42, total: 42 },
+      "2ememain": { filled: 45, total: 47 },
+    },
   },
   {
     id: "v2",
@@ -41,6 +47,10 @@ export const MOCK_VEHICLES: MockVehicle[] = [
     status: "published",
     publishedOn: ["AutoScout24", "GoCar"],
     aiCompletionPct: 91,
+    platformReadiness: {
+      autoscout24: { filled: 47, total: 47 },
+      gocar: { filled: 42, total: 42 },
+    },
   },
   {
     id: "v3",
@@ -54,6 +64,9 @@ export const MOCK_VEHICLES: MockVehicle[] = [
     status: "draft",
     publishedOn: [],
     aiCompletionPct: 74,
+    platformReadiness: {
+      autoscout24: { filled: 35, total: 47 },
+    },
   },
   {
     id: "v4",
@@ -67,6 +80,9 @@ export const MOCK_VEHICLES: MockVehicle[] = [
     status: "published",
     publishedOn: ["AutoScout24"],
     aiCompletionPct: 88,
+    platformReadiness: {
+      autoscout24: { filled: 47, total: 47 },
+    },
   },
   {
     id: "v5",
@@ -80,6 +96,9 @@ export const MOCK_VEHICLES: MockVehicle[] = [
     status: "draft",
     publishedOn: [],
     aiCompletionPct: 42,
+    platformReadiness: {
+      autoscout24: { filled: 20, total: 47 },
+    },
   },
 ];
 

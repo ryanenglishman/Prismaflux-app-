@@ -88,7 +88,7 @@ export default function RobinHome() {
                 lineHeight: 1.4,
               }}
             >
-              {published} annonces en ligne sur {MOCK_VEHICLES.length} v&eacute;hicules
+              {published} annonces en ligne sur {MOCK_VEHICLES.length} v{"\u00e9"}hicules
             </p>
           </div>
 
@@ -183,7 +183,7 @@ export default function RobinHome() {
             className="font-semibold text-white"
             style={{ fontSize: 14 }}
           >
-            Publications r&eacute;centes
+            Publications r{"\u00e9"}centes
           </h2>
           <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
             {recentVehicles.length} / {MOCK_VEHICLES.length}
@@ -209,7 +209,7 @@ export default function RobinHome() {
           className="font-semibold text-white mb-3 px-1"
           style={{ fontSize: 14 }}
         >
-          Activit&eacute; r&eacute;cente
+          Activit{"\u00e9"} r{"\u00e9"}cente
         </h2>
         <ActivityFeed activities={MOCK_ACTIVITY} limit={5} />
       </div>
