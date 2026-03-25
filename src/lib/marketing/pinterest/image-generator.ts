@@ -11,6 +11,7 @@ export async function generateImage(
     prompt,
     size: "1024x1536",
     quality: "high",
+    output_format: "png",
     n: 1,
   });
 
